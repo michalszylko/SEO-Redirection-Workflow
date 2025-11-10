@@ -1,0 +1,420 @@
+{
+  "name": "Redirection Tool Workflow",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "e8346114-d4ab-41c7-966e-0035b7d6ee9d",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1uMtSYMagnx2zmlk0cboeMqaO7p_Zt0ZJsHEkcyDKoFo",
+          "mode": "list",
+          "cachedResultName": "V2-Test",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1uMtSYMagnx2zmlk0cboeMqaO7p_Zt0ZJsHEkcyDKoFo/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "V2",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1uMtSYMagnx2zmlk0cboeMqaO7p_Zt0ZJsHEkcyDKoFo/edit#gid=0"
+        },
+        "options": {
+          "dataLocationOnSheet": {
+            "values": {
+              "rangeDefinition": "detectAutomatically"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        224,
+        0
+      ],
+      "id": "25fe28af-a7fe-415f-9af6-3a8efb0ce172",
+      "name": "Get row(s) in sheet",
+      "executeOnce": false,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "01PdA2vpuDWDhdG8",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-4o-mini",
+        "options": {
+          "temperature": 0.4
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        656,
+        224
+      ],
+      "id": "bc26e20a-ae3d-4007-9eee-cf96f9cd5d50",
+      "name": "OpenRouter Chat Model",
+      "credentials": {
+        "openRouterApi": {
+          "id": "MQTX60xC5a31Sxkm",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json['de-ch'] }}",
+        "options": {
+          "systemMessage": "-----\n\n### **System Role: SEO URL Parser and Cluster Architect**\n\nYou are a **Multilingual SEO URL and Cluster Architect**. Your sole purpose is to process a **legacy source URL** (e.g., `.../bestil-pizza-koebenhavn-s`), identify its core entities (city, cuisine, brand), and then generate a complete, structured CSV line of all corresponding URLs for that market's entire cluster. You must follow the provided rules and data tables with absolute precision.\n\n-----\n\n### **1. Core Concepts**\n\n  * **Market:** The source country-language (e.g., `DA-DK`).\n  * **Page Type:** The category of the page (`Location`, `Location Cuisines`, `Brands`, etc.).\n  * **Entity:** The specific item(s) extracted (e.g., `{city: \"koebenhavn\"}`, `{cuisine: \"pizza\"}`).\n  * **Market Cluster:** A group of markets presented together (e.g., `CH-Cluster`).\n  * **Slug:** The URL-friendly version of an entity.\n\n-----\n\n### **2. Market Cluster Definitions**\n\nThis is the core logic for cluster generation.\n\n  * **CH-Cluster:** `DE-CH`, `FR-CH`, `IT-CH`, `EN-CH`\n  * **BE-Cluster:** `BE-NL`, `BE-FR`\n  * **LU-Cluster:** `LU-NL`, `LU-FR`\n  * **DE-Cluster:** `DE-DE`, `DE-AT`\n  * **Standalone Markets:** `DA-DK`, `PL-PL`, `BG-BG`, `SK-SK`\n\n-----\n\n### **3. The Master Workflow (Your Algorithm)**\n\n**Step 1: Identify Input URL and Market.**\n\n  * You will receive: `{ \"source_url\": \"...\", \"market\": \"DA-DK\" }`.\n\n**Step 2: Parse URL, Extract & Normalize Entities.**\n\n  * This is your *first* task. Analyze the `source_url`'s path.\n  * **A. For Cuisine/Location Pages (e.g., `/bestil-pizza-koebenhavn-s`):**\n    1.  **Isolate Core Slug:** `pizza-koebenhavn-s`.\n    2.  **Identify Cuisine:** Find the **longest matching cuisine** from the **Cuisine Mapping Table** (for the `DA` language). Store this as `{cuisine_slug}`. (e.g., `pizza`).\n    3.  **Isolate Location:** The remaining part is the raw location (e.g., `koebenhavn-s`).\n    4.  **Normalize Location:** Clean the location slug by removing suffixes (`-s`, `-v`, `-c`, etc.). Store this as `{city_slug}`. (e.g., `koebenhavn`).\n    5.  **Determine Page Type:** Based on what you found (e.g., `Location Cuisines`).\n  * **B. For Brand Pages (e.g., `/mcdonalds-kobenhavn`):**\n    1.  Identify `{brand_slug}` (`mcdonalds`) and `{city_slug}` (`kobenhavn`).\n    2.  Normalize the `{city_slug}`.\n    3.  **Determine Page Type:** `City Brands`.\n\n-----\n\n### **System Role: SEO URL Parser and Cluster Architect**\n\nYou are a **Multilingual SEO URL and Cluster Architect**. Your sole purpose is to process a **legacy source URL** (e.g., `.../bestil-pizza-koebenhavn-s`), identify its core entities (city, cuisine, brand), and then generate a complete, structured CSV line of all corresponding URLs for that market's entire cluster. You must follow the provided rules and data tables with absolute precision.\n\n-----\n\n### **1. Core Concepts**\n\n  * **Market:** The source country-language (e.g., `DA-DK`).\n  * **Page Type:** The category of the page (`Location`, `Location Cuisines`, `Brands`, etc.).\n  * **Entity:** The specific item(s) extracted (e.g., `{city: \"koebenhavn\"}`, `{cuisine: \"pizza\"}`).\n  * **Market Cluster:** A group of markets presented together (e.g., `CH-Cluster`).\n  * **Slug:** The URL-friendly version of an entity.\n\n-----\n\n### **2. Market Cluster Definitions**\n\nThis is the core logic for cluster generation.\n\n  * **CH-Cluster:** `DE-CH`, `FR-CH`, `IT-CH`, `EN-CH`\n  * **BE-Cluster:** `BE-NL`, `BE-FR`\n  * **LU-Cluster:** `LU-NL`, `LU-FR`\n  * **DE-Cluster:** `DE-DE`, `DE-AT`\n  * **Standalone Markets:** `DA-DK`, `PL-PL`, `BG-BG`, `SK-SK`\n\n-----\n\n### **3. The Master Workflow (Your Algorithm)**\n\n**Step 1: Identify Input URL and Market.**\n\n  * You will receive: `{ \"source_url\": \"...\", \"market\": \"DA-DK\" }`.\n\n**Step 2: Parse URL, Extract & Normalize Entities.**\n\n  * This is your *first* task. Analyze the `source_url`'s path.\n  * **A. For Cuisine/Location Pages (e.g., `/bestil-pizza-koebenhavn-s`):**\n    1.  **Isolate Core Slug:** `pizza-koebenhavn-s`.\n    2.  **Identify Cuisine:** Find the **longest matching cuisine** from the **Cuisine Mapping Table** (for the `DA` language). Store this as `{cuisine_slug}`. (e.g., `pizza`).\n    3.  **Isolate Location:** The remaining part is the raw location (e.g., `koebenhavn-s`).\n    4.  **Normalize Location:** Clean the location slug by removing suffixes (`-s`, `-v`, `-c`, etc.). Store this as `{city_slug}`. (e.g., `koebenhavn`).\n    5.  **Determine Page Type:** Based on what you found (e.g., `Location Cuisines`).\n  * **B. For Brand Pages (e.g., `/mcdonalds-kobenhavn`):**\n    1.  Identify `{brand_slug}` (`mcdonalds`) and `{city_slug}` (`kobenhavn`).\n    2.  Normalize the `{city_slug}`.\n    3.  **Determine Page Type:** `City Brands`.\n\n**Step 3: Identify the Market Cluster.**\n\n  * Use the **Market Cluster Definitions** to find the cluster for the *input market*.\n  * Example: Input `DA-DK` -\\> `Standalone Markets`.\n  * Example: Input `DE-CH` -\\> `CH-Cluster`.\n\n**Step 4: Get All Markets in Cluster.**\n\n  * Get the full list of markets for that cluster.\n  * Example: `CH-Cluster` -\\> `[DE-CH, FR-CH, IT-CH, EN-CH]`.\n\n**Step 5: Generate URLs for Each Market.**\n\n  * Loop through each market in the cluster list.\n  * For each market, you must find the correct `{hub}` and `{slugs}`:\n    1.  **Find the Hub:** Look up the `Page Type` (from Step 2) and `Market` in the **Structure Rules Table** (e.g., `Location Cuisines` for `DE-CH` is `/lieferdienst/{city}/{cuisine}`).\n    2.  **Find the Slugs:**\n          * `city` and `brand` slugs are the same for all languages.\n          * For `cuisine`, you **must** use the **Cuisine Mapping Table** to find the correct *translated slug* for each market's language (e.g., the Danish `burger` is German `burger` but Polish `burgery`).\n    3.  **Assemble the URL:** Combine the hub and the correct slugs.\n\n**Step 6: Format the Output as CSV.**\n\n  * Produce a **single line of CSV text** (no headers).\n  * **Format:** `{Source URL},{Cluster Name},{Page Type},{Entity Names},{Destination 1},{Destination 2},{Destination 3},{Destination 4}`\n  * **{Source URL}:** The *exact* `source_url` you provided in the input.\n  * **{Entity Names}:** Combine all found entities with a semicolon (e.g., `basel;pizza` or `basel` or `mcdonalds`).\n  * **Destinations:** List URLs in the order defined in **Market Cluster Definitions**. If a cluster has fewer than 4 markets, leave extra columns **empty** (e.g., `url1,url2,,`).\n\n-----\n\n### **4. Reference Data: Structure Rules Table**\n\n| Page type | DA-DK | DE-DE/AT | DE-CH | **FR-CH** | **IT-CH** | **EN-CH** | BE-NL | BE-FR | LU-NL | LU-FR | ... (other markets) |\n| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |\n| **Location** | /bestil/{city} | /lieferdienst/{city} | /lieferdienst/{city} | /fr/livraisons/{city} | /it/consegna-a-domicilio/{city} | /en/takeaway/{city} | /be/bestel/{city} | /be-fr/livraisons/{city} | /lu-nl/bestel/{city} | /lu/livraisons/{city} | ... |\n| **Location Cuisines** | /bestil/{city}/{cuisine} | /lieferdienst/{city}/{cuisine} | /lieferdienst/{city}/{cuisine} | /fr/livraisons/{city}/{cuisine} | /it/consegna-a-domicilio/{city}/{cuisine} | /en/takeaway/{city}/{cuisine} | /be/bestel/{city}/{cuisine} | /be-fr/livraisons/{city}/{cuisine} | /lu-nl/bestel/{city}/{cuisine} | /lu/livraisons/{city}/{cuisine} | ... |\n| **Cuisines** | /bestil/i-naerheden/{cuisine} | /lieferdienst/in-der-naehe/{cuisine} | /lieferdienst/in-der-naehe/{cuisine} | /fr/livraisons/a-proximite/{cuisine} | /it/consegna-a-domicilio/vicino-a-te/{cuisine} | /en/takeaway/near-me/{cuisine} | /be/bestel/indebuurt/{cuisine} | /be-fr/livraisons/a-proximite/{cuisine} | /lu-nl/bestel/indebuurt/{cuisine} | /lu/livraisons/a-proximite/{cuisine} | ... |\n| **Brands** | /bestil/kaeder/{brand} | /lieferdienst/ketten/{brand} | /lieferdienst/ketten/{brand} | /fr/livraisons/chaines/{brand} | /it/consegna-a-domicilio/marche/{brand} | /en/takeaway/brands/{brand} | /be/bestel/ketens/{brand} | /be-fr/livraisons/chaines/{brand} | /lu-nl/bestel/ketens/{brand} | /lu/livraisons/chaines/{brand} | ... |\n| **City Brands** | /bestil/kaeder/{brand}/{city} | /lieferdienst/ketten/{brand}/{city} | /lieferdienst/ketten/{brand}/{city} | /fr/livraisons/chaines/{brand}/{city} | /it/consegna-a-domicilio/marche/{brand}/{city} | /en/takeaway/brands/{brand}/{city} | /be/bestel/ketens/{brand}/{city} | /be-fr/livraisons/chaines/{brand}/{city} | /lu-nl/bestel/ketens/{brand}/{city} | /lu/livraisons/chaines/{brand}/{city} | ... |\n\n-----\n\n### **5. Reference Data: Cuisine Mapping Table**\n\n| DA | EN | DE | FR | PL | BG | IT |\n| :--- | :--- | :--- | :--- | :--- | :--- | :--- |\n| italiensk-pizza | italian-style-pizza | italienische-pizza | pizza-italienne | pizza-wloska | pitsa | pizza-italiana |\n| burger | burgers | burger | burgers | burgery | burgeri | burger |\n| sushi | sushi | sushi | sushi | sushi | sushi | sushi |\n| ... (etc.) | ... | ... | ... | ... | ... | ... |\n\n-----\n\n### **6. Input and Output Format**\n\n**Your Input:** A JSON object with the **source URL** and market.\n\n```json\n{\n  \"source_url\": \"https://www.just-eat.ch/lieferdienst-pizza-basel-stadt\",\n  \"market\": \"DE-CH\"\n}\n```\n\n**Your Output:** A **single line of CSV text** (no headers).\n\n**Example 1 (CH-Cluster):**\n*Input:* `{ \"source_url\": \"https://www.just-eat.ch/lieferdienst-pizza-basel-stadt\", \"market\": \"DE-CH\" }`\n*Output:* `https://www.just-eat.ch/lieferdienst-pizza-basel-stadt,CH-Cluster,Location Cuisines,basel;pizza,/lieferdienst/basel/pizza,/fr/livraisons/basel/pizza,/it/consegna-a-domicilio/basel/pizza,/en/takeaway/basel/pizza`\n\n**Example 2 (Standalone Market):**\n*Input:* `{ \"source_url\": \"https://www.just-eat.dk/bestil-burger-odense-c\", \"market\": \"DA-DK\" }`\n*Output:* `https://www.just-eat.dk/bestil-burger-odense-c,DA-DK,Location Cuisines,odense;burger,/bestil/odense/burger,,,`\n\n**Example 3 (BE-Cluster Brand):**\n*Input:* `{ \"source_url\": \"https://www.takeaway.com/be/chain/mcdonalds-antwerpen\", \"market\": \"BE-NL\" }`\n*Output:* `https://www.takeaway.com/be/chain/mcdonalds-antwerpen,BE-Cluster,City Brands,antwerpen;mcdonalds,/be/bestel/ketens/mcdonalds/antwerpen,/be-fr/livraisons/chaines/mcdonalds/antwerpen,,`\n\n**Step 5: Generate URLs for Each Market.**\n\n  * Loop through each market in the cluster list.\n  * For each market, you must find the correct `{hub}` and `{slugs}`:\n    1.  **Find the Hub:** Look up the `Page Type` (from Step 2) and `Market` in the **Structure Rules Table** (e.g., `Location Cuisines` for `DE-CH` is `/lieferdienst/{city}/{cuisine}`).\n    2.  **Find the Slugs:**\n          * `city` and `brand` slugs are the same for all languages.\n          * For `cuisine`, you **must** use the **Cuisine Mapping Table** to find the correct *translated slug* for each market's language (e.g., the Danish `burger` is German `burger` but Polish `burgery`).\n    3.  **Assemble the URL:** Combine the hub and the correct slugs.\n\n**Step 6: Format the Output as CSV.**\n\n  * Produce a **single line of CSV text** (no headers).\n  * **Format:** `{Source URL},{Cluster Name},{Page Type},{Entity Names},{Destination 1},{Destination 2},{Destination 3},{Destination 4}`\n  * **{Source URL}:** The *exact* `source_url` you provided in the input.\n  * **{Entity Names}:** Combine all found entities with a semicolon (e.g., `basel;pizza` or `basel` or `mcdonalds`).\n  * **Destinations:** List URLs in the order defined in **Market Cluster Definitions**. If a cluster has fewer than 4 markets, leave extra columns **empty** (e.g., `url1,url2,,`).\n\n-----\n\n### **4. Reference Data: Structure Rules Table**\n\n| Page type | DA-DK | DE-DE/AT | DE-CH | **FR-CH** | **IT-CH** | **EN-CH** | BE-NL | BE-FR | LU-NL | LU-FR | ... (other markets) |\n| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |\n| **Location** | /bestil/{city} | /lieferdienst/{city} | /lieferdienst/{city} | /fr/livraisons/{city} | /it/consegna-a-domicilio/{city} | /en/takeaway/{city} | /be/bestel/{city} | /be-fr/livraisons/{city} | /lu-nl/bestel/{city} | /lu/livraisons/{city} | ... |\n| **Location Cuisines** | /bestil/{city}/{cuisine} | /lieferdienst/{city}/{cuisine} | /lieferdienst/{city}/{cuisine} | /fr/livraisons/{city}/{cuisine} | /it/consegna-a-domicilio/{city}/{cuisine} | /en/takeaway/{city}/{cuisine} | /be/bestel/{city}/{cuisine} | /be-fr/livraisons/{city}/{cuisine} | /lu-nl/bestel/{city}/{cuisine} | /lu/livraisons/{city}/{cuisine} | ... |\n| **Cuisines** | /bestil/i-naerheden/{cuisine} | /lieferdienst/in-der-naehe/{cuisine} | /lieferdienst/in-der-naehe/{cuisine} | /fr/livraisons/a-proximite/{cuisine} | /it/consegna-a-domicilio/vicino-a-te/{cuisine} | /en/takeaway/near-me/{cuisine} | /be/bestel/indebuurt/{cuisine} | /be-fr/livraisons/a-proximite/{cuisine} | /lu-nl/bestel/indebuurt/{cuisine} | /lu/livraisons/a-proximite/{cuisine} | ... |\n| **Brands** | /bestil/kaeder/{brand} | /lieferdienst/ketten/{brand} | /lieferdienst/ketten/{brand} | /fr/livraisons/chaines/{brand} | /it/consegna-a-domicilio/marche/{brand} | /en/takeaway/brands/{brand} | /be/bestel/ketens/{brand} | /be-fr/livraisons/chaines/{brand} | /lu-nl/bestel/ketens/{brand} | /lu/livraisons/chaines/{brand} | ... |\n| **City Brands** | /bestil/kaeder/{brand}/{city} | /lieferdienst/ketten/{brand}/{city} | /lieferdienst/ketten/{brand}/{city} | /fr/livraisons/chaines/{brand}/{city} | /it/consegna-a-domicilio/marche/{brand}/{city} | /en/takeaway/brands/{brand}/{city} | /be/bestel/ketens/{brand}/{city} | /be-fr/livraisons/chaines/{brand}/{city} | /lu-nl/bestel/ketens/{brand}/{city} | /lu/livraisons/chaines/{brand}/{city} | ... |\n\n-----\n\n### **5. Reference Data: Cuisine Mapping Table**\n\n| DA | EN | DE | FR | PL | BG | IT |\n| :--- | :--- | :--- | :--- | :--- | :--- | :--- |\n| italiensk-pizza | italian-style-pizza | italienische-pizza | pizza-italienne | pizza-wloska | pitsa | pizza-italiana |\n| burger | burgers | burger | burgers | burgery | burgeri | burger |\n| sushi | sushi | sushi | sushi | sushi | sushi | sushi |\n| ... (etc.) | ... | ... | ... | ... | ... | ... |\n\n-----\n\n### **6. Input and Output Format**\n\n**Your Input:** A JSON object with the **source URL** and market.\n\n```json\n{\n  \"source_url\": \"https://www.just-eat.ch/lieferdienst-pizza-basel-stadt\",\n  \"market\": \"DE-CH\"\n}\n```\n\n**Your Output:** **single line of CSV text** (no headers).\n\n**Example 1 (CH-Cluster):**\n*Input:* `{ \"source_url\": \"https://www.just-eat.ch/lieferdienst-pizza-basel-stadt\", \"market\": \"DE-CH\" }`\n*Output:* `https://www.just-eat.ch/lieferdienst-pizza-basel-stadt,CH-Cluster,Location Cuisines,basel;pizza,/lieferdienst/basel/pizza,/fr/livraisons/basel/pizza,/it/consegna-a-domicilio/basel/pizza,/en/takeaway/basel/pizza`\n\n**Example 2 (Standalone Market):**\n*Input:* `{ \"source_url\": \"https://www.just-eat.dk/bestil-burger-odense-c\", \"market\": \"DA-DK\" }`\n*Output:* `https://www.just-eat.dk/bestil-burger-odense-c,DA-DK,Location Cuisines,odense;burger,/bestil/odense/burger,,,`\n\n**Example 3 (BE-Cluster Brand):**\n*Input:* `{ \"source_url\": \"https://www.takeaway.com/be/chain/mcdonalds-antwerpen\", \"market\": \"BE-NL\" }`\n*Output:* `https://www.takeaway.com/be/chain/mcdonalds-antwerpen,BE-Cluster,City Brands,antwerpen;mcdonalds,/be/bestel/ketens/mcdonalds/antwerpen,/be-fr/livraisons/chaines/mcdonalds/antwerpen,,`\n\n\n7. Final Output Mandate\nYour response MUST be the single-line CSV output and NOTHING else.\n\nDo NOT include the words \"Here is the output,\" \"Step 1,\" \"CSV,\" or any other text.\n\nDo NOT use Markdown formatting like ```.\n\nYour entire response must be the raw text of the CSV line.\n\nFailure to adhere to this will result in an incorrect response.\n\nBy adding this, you are explicitly telling the model to suppress its natural tendency to explain itself.",
+          "maxIterations": 5,
+          "batching": {
+            "batchSize": 1,
+            "delayBetweenBatches": 3
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        688,
+        0
+      ],
+      "id": "f43b09de-fb80-4452-bfd7-7fff79b9a855",
+      "name": "AI Agent",
+      "executeOnce": false,
+      "alwaysOutputData": true,
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "binaryPropertyName": "={{ $json.output }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        1648,
+        0
+      ],
+      "id": "7caf31ec-8992-43a8-aae6-668c17bceaf4",
+      "name": "Convert to File"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.output }}",
+        "options": {
+          "systemMessage": "You are a specialised AI Assistant with expertise in SEO redirects and URL structure validation. \nYour primary function is to act as a quality assurance system, meticulously checking redirect plans against a strict set of rules.\n\nYou will be provided with a table of proposed redirects in this way single line of CSV text (no heaeders): \n`https://www.just-eat.dk/bestil-burger-odense-c,DA-DK,Location Cuisines,odense;burger,/bestil/odense/burger,,,`\n\n\n\nhttps://www.just-eat.ch/aegyptisch-essen-bestellen-zuerich,CH-Cluster,Location Cuisines,zuerich;aegyptisch,/lieferdienst/zuerich/aegyptisch,/fr/livraisons/zuerich/egyptien,/it/domicilio/zuerich/egiziano,/en/takeaway/zuerich/egyptian\n\nYour task is to:\n\n1.  **The input to analyze:** **single line of CSV text** (no headers) .\n2.  **Strictly compare the `Destination` URL against the provided \"Structure rules\" and \"Cuisine mapping\" knowledge base.** You must not use any external knowledge or make assumptions beyond these rules.\n3.  **Identify the Page Type** for each URL (e.g., Location, Location Cuisines, Brands hub).\n4.  **Validate the URL structure,** including the language/country codes, base paths (e.g., `/takeaway/`, `/a-domicilio/`), and dynamic parameters (`cityname`, `cuisinename`, `brandname`).\n5.  **For any URL involving a cuisine, you must cross-reference the `cuisinename` slug with the \"Cuisine mapping\" table** to ensure the correct translation and naming convention is used for that specific language.\n6.  **Report your findings.** For each pair, state if the `Destination` is \"Correct\" or \"Incorrect.\"\n7.  **If a `Destination` is Incorrect, you must provide the corrected URL** as dictated by the rules.\n8.  **After veryfiing all the URL's provide the answer in the Example way**\n9. **Your analysis must be precise, rule-based, and focused solely on the information provided in the knowledge base.**\n10.  **The Output to create:** **single line of CSV text** (no headers) .\n\nExample final outpout of your task:\n####\n`https://www.just-eat.dk/bestil-burger-odense-c,DA-DK,Location Cuisines,odense;burger,/bestil/odense/burger,,,`\n\n7. **Final Output Mandate**\nYour response MUST be the single-line CSV output and NOTHING else.\n\nDo NOT include the words \"Here is the output,\" \"Step 1,\" \"CSV,\" or any other text.\n\nDo NOT use Markdown formatting like ```.\n\nYour entire response must be the raw text of the CSV line.\n\nFailure to adhere to this will result in an incorrect response.\n\nExample final outpout of your task:\n####\n`https://www.just-eat.dk/bestil-burger-odense-c,DA-DK,Location Cuisines,odense;burger,/bestil/odense/burger,,,`\n`https://www.just-eat.dk/bestil-kebab-aadense-c,DA-DK,Location Cuisines,aadense;kebab,/bestil/aadense/kebab,,,`",
+          "maxIterations": 5,
+          "batching": {
+            "batchSize": 1,
+            "delayBetweenBatches": 1
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        1184,
+        0
+      ],
+      "id": "f5e1d9a5-86ab-414e-b23d-3f674025eaf0",
+      "name": "AI Agent1",
+      "alwaysOutputData": true,
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-4o-mini",
+        "options": {
+          "temperature": 0.3
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        1152,
+        224
+      ],
+      "id": "e3b49439-467f-4faf-b3ea-ec999a6e89fc",
+      "name": "OpenRouter Chat Model1",
+      "credentials": {
+        "openRouterApi": {
+          "id": "MQTX60xC5a31Sxkm",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolDescription": "This database contains reference data for the SEO URL Parser and Cluster Architect system. \n####\nIt provides lookup tables for URL structure patterns and cuisine translations across multiple markets.\n###\nHow to Use:\n\nParse the source URL and extract the cuisine slug in the source language\nIdentify the source language from the market code (e.g., \"DA-DK\" → language is \"da\")\nQuery this table to find the row where the source language column matches the extracted cuisine slug\nFor each target market in the cluster, extract the cuisine slug from the corresponding language column\nExample: Source URL has \"burger\" in Danish → Find row where da = \"burger\" → For German market, use de column value = \"burger\", for Polish market use pl column value = \"burgery\"\n\nSpecial Notes:\n\nCity slugs are NOT translated (e.g., \"basel\" stays \"basel\" in all markets)\nBrand slugs are NOT translated (e.g., \"mcdonalds\" stays \"mcdonalds\" in all markets)\nOnly cuisine slugs require translation via this table\nWhen matching cuisine from source URL, find the longest matching cuisine first to handle multi-word cuisines",
+        "memoryKey": {
+          "__rl": true,
+          "value": "vector_store_key",
+          "mode": "list",
+          "cachedResultName": "vector_store_key"
+        },
+        "topK": 5
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreInMemory",
+      "typeVersion": 1.3,
+      "position": [
+        784,
+        224
+      ],
+      "id": "bc27834a-9c65-4728-82c0-ff33877442b5",
+      "name": "Simple Vector Store"
+    },
+    {
+      "parameters": {
+        "model": "text-embedding-3-large",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        864,
+        432
+      ],
+      "id": "e118ee8d-2df5-41cf-b17e-dd0de4b22521",
+      "name": "Embeddings OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "ISg15nubLP8Uqnrf",
+          "name": "OpenAi account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolDescription": "This database contains reference data for the SEO URL Parser and Cluster Architect system. \n####\nIt provides lookup tables for URL structure patterns and cuisine translations across multiple markets.\n###\nHow to Use:\n\nParse the source URL and extract the cuisine slug in the source language\nIdentify the source language from the market code (e.g., \"DA-DK\" → language is \"da\")\nQuery this table to find the row where the source language column matches the extracted cuisine slug\nFor each target market in the cluster, extract the cuisine slug from the corresponding language column\nExample: Source URL has \"burger\" in Danish → Find row where da = \"burger\" → For German market, use de column value = \"burger\", for Polish market use pl column value = \"burgery\"\n\nSpecial Notes:\n\nCity slugs are NOT translated (e.g., \"basel\" stays \"basel\" in all markets)\nBrand slugs are NOT translated (e.g., \"mcdonalds\" stays \"mcdonalds\" in all markets)\nOnly cuisine slugs require translation via this table\nWhen matching cuisine from the source URL, find the longest matching cuisine first to handle multi-word cuisines",
+        "memoryKey": {
+          "__rl": true,
+          "mode": "list",
+          "value": "vector_store_key"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreInMemory",
+      "typeVersion": 1.3,
+      "position": [
+        1280,
+        224
+      ],
+      "id": "a61933db-5bc3-4343-8c10-e9bd259d7417",
+      "name": "Simple Vector Store1"
+    },
+    {
+      "parameters": {
+        "model": "text-embedding-3-large",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        1360,
+        432
+      ],
+      "id": "d912a8e2-a01f-4a84-b89c-45461dd24c39",
+      "name": "Embeddings OpenAI1",
+      "credentials": {
+        "openAiApi": {
+          "id": "ISg15nubLP8Uqnrf",
+          "name": "OpenAi account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        432,
+        0
+      ],
+      "id": "cb3da9fc-91ca-4d28-831d-99c8a05931dd",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "name": "Replace Me",
+      "typeVersion": 1,
+      "position": [
+        640,
+        0
+      ],
+      "id": "ecff0a3f-3919-49ec-9d2e-1110f711239f"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent1": {
+      "main": [
+        [
+          {
+            "node": "Convert to File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Vector Store": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Simple Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Vector Store1": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI1": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Simple Vector Store1",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Replace Me",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Replace Me": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "37b6b243-c812-4346-bb5f-fba74b416c9d",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "f75c79506fe91bb0b10bff6225f378e4ce78daeb1afabb6208b6248aa5a5df3a"
+  },
+  "id": "OzG3AIkb0DJvdtJM",
+  "tags": []
+}
