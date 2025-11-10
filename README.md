@@ -1,6 +1,9 @@
 # SEO-Redirection-Workflow
 A repository of the created workflow for creating the new URL structure, along with the new URL's based on the internal RAG.
 
+Built an n8n + LLM + RAG workflow that automatically maps thousands of legacy marketplace URLs to a new multi-country URL structure with validation, turning a multi-week manual task into a repeatable, machine-audited system. 
+The solution encodes complex business rules (clusters, markets, cuisines, brands) directly into vector stores and AI agents, ensuring consistency and protecting organic revenue during migrations. 
+
 # Redirection Tool Workflow
 
 Automated SEO redirection & URL mapping engine built on **n8n + LLMs + Google Sheets**.
